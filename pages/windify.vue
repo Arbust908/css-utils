@@ -150,7 +150,7 @@ const namedVariableColors = computed(() => {
 const colorOptions = ['Slate', 'Gray', 'Zinc', 'Neutral', 'Stone', 'Red', 'Orange', 'Amber', 'Yellow', 'Lime', 'Green', 'Emerald', 'Teal', 'Cyan', 'Sky', 'Blue', 'Indigo', 'Violet', 'Purple', 'Fuchsia', 'Pink', 'Rose']
 const activeColors = ref(['Slate', 'Gray', 'Zinc', 'Neutral', 'Stone', 'Red', 'Orange', 'Amber', 'Yellow', 'Lime', 'Green', 'Emerald', 'Teal', 'Cyan', 'Sky', 'Blue', 'Indigo', 'Violet', 'Purple', 'Fuchsia', 'Pink', 'Rose'])
 function toggleColors() {
-  activeColors.value = activeColors.value.length ? [] : colorOptions
+  activeColors.value = activeColors.value.length ? ['-'] : colorOptions
 }
 const togglerText = computed(() => activeColors.value.length ? 'Clear All' : 'Select All')
 
@@ -179,8 +179,9 @@ const colorsToTW = computed(() => {
     }
   }).sort((a, b) => a.name.localeCompare(b.name))
 })
-const uniqueTailwindColors = computed(() => colorsToTW.value.reduce((acc, color) => {
+const uniqueColor = computed(() => colorsToTW.value.reduce((acc, color) => {
   const colorIndex = acc.findIndex(item => item.name === color.name)
+  const oldColorIndex = acc.findIndex(item => item.originalColorName === color.originalColorName)
   if (colorIndex === -1) {
     acc.push({
       name: color.name,
@@ -191,9 +192,22 @@ const uniqueTailwindColors = computed(() => colorsToTW.value.reduce((acc, color)
   else {
     acc[colorIndex].count = acc[colorIndex].count + 1
   }
+  if (oldColorIndex === -1) {
+    acc.push({
+      name: color.originalColorName,
+      closestColor: `var(--${color.name.toLowerCase()})`,
+      count: 0,
+    })
+  }
 
   return acc
-}, []))
+}, []).sort((a, b) => {
+  if (a.count > 0 && b.count > 0 || a.count === 0 && b.count === 0)
+    return a.name.localeCompare(b.name)
+
+  return b.count - a.count
+}))
+const uniqueTailwindColors = computed(() => uniqueColor.value.filter(color => color.count !== 0))
 
 const final_vars = ref('')
 function copyAll() {
@@ -226,11 +240,26 @@ function copyAll() {
       </UButton>
     </nav>
     <article class="grid min-h-full gap-3 md:grid-cols-3">
-      <UTextarea
+      <!-- <UTextarea
         v-model="cssText"
         autoresize
         placeholder="Add your css here..."
-      />
+      /> -->
+      <UCard>
+        <section class="grid grid-cols-2 gap-2 pt-8">
+          <div v-for="color in uniqueTailwindColors" :key="color.originalColor" class="grid grid-cols-[24px,24px,1fr] items-center gap-2">
+            <div class="flex overflow-clip rounded">
+              <div class="h-6 w-6">
+                {{ color.count }}
+              </div>
+            </div>
+            <div class="flex overflow-clip rounded">
+              <div class="h-6 w-6" :style="{ backgroundColor: color.closestColor }" />
+            </div>
+            <span class="text-left">{{ color.name }}</span>
+          </div>
+        </section>
+      </UCard>
       <UCard
         class="col-span-2"
       >
@@ -245,32 +274,17 @@ function copyAll() {
             <span class="text-xs">{{ color.distance }}</span>
           </div>
         </div>
-        <section class="grid grid-cols-3 gap-2 pt-8">
-          <div v-for="color in uniqueTailwindColors" :key="color.originalColor" class="grid grid-cols-[24px,24px,1fr] items-center gap-2">
-            <div class="flex overflow-clip rounded">
-              <div class="h-6 w-6">
-                {{ color.count }}
-              </div>
-            </div>
-            <div class="flex overflow-clip rounded">
-              <div class="h-6 w-6" :style="{ backgroundColor: color.closestColor }" />
-            </div>
-            <span class="text-left">{{ color.name }}</span>
-          </div>
-        </section>
       </UCard>
     </article>
     <article class="">
       <UCard class="relative">
         <UIcon name="i-heroicons-clipboard-document-list-20-solid" class="absolute right-6 top-6 h-8 w-8 bg-gray-50 text-white" @click="copyAll" />
         <div ref="final_vars" class="text-left text-xs text-gray-400">
-          /* Tailwind colors */
-          <p v-for="color in colorsToTW" :key="color.originalColor">
-            --{{ color.name.toLowerCase() }}: {{ color.closestColor.toUpperCase() }};
-          </p>
-          /* Converted colors */
-          <p v-for="color in colorsToTW" :key="color.originalColor">
-            --{{ color.originalColorName.toLowerCase() }}: var(--{{ color.name.toLowerCase() }});
+          <p
+            v-for="{ name, closestColor } in uniqueColor"
+            :key="name + closestColor"
+          >
+            --{{ name.toLowerCase() }}: {{ closestColor }};
           </p>
         </div>
       </UCard>
