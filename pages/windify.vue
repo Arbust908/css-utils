@@ -56,9 +56,10 @@ const colorsToTW = computed(() => {
       ...colorTWized,
       originalColorName: colorName,
     }
-  }).sort((a, b) => a.name.localeCompare(b.name))
+  }).sort((a, b) => a.name?.localeCompare(b.name))
 })
 const uniqueColor = computed(() => colorsToTW.value.reduce((acc, color) => {
+  console.log('color: ', color)
   const colorIndex = acc.findIndex(item => item.name === color.name)
   const oldColorIndex = acc.findIndex(item => item.originalColorName === color.originalColorName)
   if (colorIndex === -1) {
@@ -74,7 +75,7 @@ const uniqueColor = computed(() => colorsToTW.value.reduce((acc, color) => {
   if (oldColorIndex === -1) {
     acc.push({
       name: color.originalColorName,
-      closestColor: `var(--${color.name.toLowerCase()})`,
+      closestColor: `var(--${color.name?.toLowerCase()})`,
       count: 0,
     })
   }
@@ -82,7 +83,7 @@ const uniqueColor = computed(() => colorsToTW.value.reduce((acc, color) => {
   return acc
 }, []).sort((a, b) => {
   if (a.count > 0 && b.count > 0 || a.count === 0 && b.count === 0)
-    return a.name.localeCompare(b.name)
+    return a.name?.localeCompare(b.name)
 
   return b.count - a.count
 }))
@@ -109,7 +110,7 @@ function copyAll() {
 </script>
 
 <template>
-  <div>
+  <div class="space-y-4">
     <nav class="flex flex-wrap gap-2 p-6">
       <UButton v-for="color in colorOptions" :key="color" :color="color.toLocaleLowerCase()" :variant="isColorActive(color) ? 'solid' : 'soft'" @click="toggleColor(color)">
         {{ color }}
@@ -118,7 +119,7 @@ function copyAll() {
         {{ togglerText }}
       </UButton>
     </nav>
-    <article class="grid min-h-full gap-3 md:grid-cols-3">
+    <article class="grid gap-3 md:grid-cols-3">
       <UCard>
         <section class="grid grid-cols-2 gap-2 pt-8">
           <div v-for="color in uniqueTailwindColors" :key="color.originalColor" class="grid grid-cols-[24px,24px,1fr] items-center gap-2">
@@ -150,7 +151,7 @@ function copyAll() {
         </div>
       </UCard>
     </article>
-    <article class="grid grid-cols-3">
+    <article class="grid gap-3 md:grid-cols-3">
       <UCard class="relative">
         <UIcon name="i-heroicons-clipboard-document-list-20-solid" class="absolute right-6 top-6 h-8 w-8 bg-gray-50 text-white" @click="copyAll" />
         <div ref="final_vars" class="text-left text-xs text-gray-400">
