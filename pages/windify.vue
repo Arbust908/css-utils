@@ -35,7 +35,6 @@ const colorsToVars = computed(() => {
     const colorName = getColorName(color).toLocaleLowerCase().replaceAll(' ', '-')
     variableText += `--${colorName}: ${color};\n`
   })
-  console.log('variableText: ', variableText)
 
   return variableText
 })
@@ -43,7 +42,6 @@ const namedVariableColors = computed(() => {
   if (!colorsToVars.value)
     return []
   const extractedNamedVars = extractFromCssVars(colorsToVars.value)
-  console.log('extractedNamedVars: ', extractedNamedVars)
   if (!extractedNamedVars.length)
     return []
 
