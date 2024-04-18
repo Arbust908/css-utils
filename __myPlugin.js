@@ -3,11 +3,11 @@ import postcss from 'postcss'
 // Helper function to append grouped selectors to the given root or at-rule
 function appendGroupedSelectors(target, selectorsMap) {
   selectorsMap.forEach((selectors, declaration) => {
-    const [prop, value] = declaration.split(': ');
-    const newRule = postcss.rule({ selectors: Array.from(selectors).join(', ') });
-    newRule.append({ prop, value });
-    target.append(newRule);
-  });
+    const [prop, value] = declaration.split(': ')
+    const newRule = postcss.rule({ selectors: Array.from(selectors).join(', ') })
+    newRule.append({ prop, value })
+    target.append(newRule)
+  })
 }
 
 function myPlugin(opts = {}) {
