@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { findClosestColor, findTailwindColor } from '@/constants/NameColorJavaScript'
+import { findClosestColor, getColorName } from '@/constants/NameColorJavaScript'
 import { extractFromCssVars } from '@/composables/colorExtractor'
 import { rawTailwindArray } from '@/constants/ColorLists'
 
@@ -17,10 +17,33 @@ const cssText = ref(`
   background: white;
 }
 `)
-const namedVariableColors = computed(() => {
+const { getColorsFromText } = useColorExtractor(cssText.value)
+const extractedColorsList = computed(() => {
   if (!cssText.value)
+    return [[], [], []]
+  const { hexColors, rgbColors, namedColors } = getColorsFromText(cssText.value)
+  if (!hexColors.length && !rgbColors.length && !namedColors.length)
+    return [[], [], []]
+
+  return [hexColors, rgbColors, namedColors]
+})
+const colorsToVars = computed(() => {
+  let variableText = ''
+  const [hexColors, rgbColors, namedColors] = extractedColorsList.value
+  const colors = [...new Set([...hexColors, ...rgbColors, ...namedColors])]
+  colors.forEach((color) => {
+    const colorName = getColorName(color).toLocaleLowerCase().replaceAll(' ', '-')
+    variableText += `--${colorName}: ${color};\n`
+  })
+  console.log('variableText: ', variableText)
+
+  return variableText
+})
+const namedVariableColors = computed(() => {
+  if (!colorsToVars.value)
     return []
-  const extractedNamedVars = extractFromCssVars(cssText.value)
+  const extractedNamedVars = extractFromCssVars(colorsToVars.value)
+  console.log('extractedNamedVars: ', extractedNamedVars)
   if (!extractedNamedVars.length)
     return []
 
