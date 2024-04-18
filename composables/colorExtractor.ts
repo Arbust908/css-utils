@@ -21,6 +21,23 @@ function extractColors(text: string): ColorExtraction {
 
   return { hexColors, rgbColors, namedColors }
 }
+/* Only colors */
+export function extractFromCssVars(text: string): [string, string][] {
+  // we need a regex that matches the css variable name and its value
+  const cssVarPattern = /--[\w-]+:\s*[^;]+/g
+  const cssVars = Array.from(text.matchAll(cssVarPattern), m => m[0])
+    .map((cssVar) => {
+      const splittedVar = cssVar.split(': ')
+      const varName = splittedVar[0].startsWith('--color-') ? splittedVar[0].split('--')[1] : splittedVar[0].split('--')[1]
+      const isHex = splittedVar[1].startsWith('#')
+      if (isHex)
+        return [varName, splittedVar[1]]
+
+      return null
+    })
+    .filter(Boolean)
+  return cssVars as [string, string][]
+}
 
 export function useColorExtractor(context?: string) {
   const extractedColors = computed(() => extractColors(context || '') || [])
