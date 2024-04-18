@@ -142,7 +142,13 @@ onMounted(() => {
 <template>
   <div class="space-y-4">
     <nav class="flex flex-wrap gap-2 p-6">
-      <UButton v-for="color in colorOptions" :key="color" :color="color.toLocaleLowerCase()" :variant="isColorActive(color) ? 'solid' : 'soft'" @click="toggleColor(color)">
+      <UButton
+        v-for="color in colorOptions"
+        :key="color"
+        :color="['slate', 'zinc', 'neutral', 'stone'].includes(color.toLocaleLowerCase()) ? 'gray' : color.toLowerCase()"
+        :variant="isColorActive(color) ? 'solid' : 'soft'"
+        @click="toggleColor(color)"
+      >
         {{ color }}
       </UButton>
       <UButton color="gray" variant="outline" @click="toggleColors">
