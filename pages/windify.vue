@@ -22,18 +22,23 @@ const extractedColorsList = computed(() => {
   if (!cssText.value)
     return [[], [], []]
   const { hexColors, rgbColors, namedColors } = getColorsFromText(cssText.value)
+  const cssVars = extractFromCssVars(cssText.value)
   if (!hexColors.length && !rgbColors.length && !namedColors.length)
     return [[], [], []]
 
-  return [hexColors, rgbColors, namedColors]
+  return [hexColors, rgbColors, namedColors, cssVars]
 })
 const colorsToVars = computed(() => {
   let variableText = ''
-  const [hexColors, rgbColors, namedColors] = extractedColorsList.value
+  const [hexColors, rgbColors, namedColors, cssVar] = extractedColorsList.value
   const colors = [...new Set([...hexColors, ...rgbColors, ...namedColors])]
   colors.forEach((color) => {
     const colorName = getColorName(color).toLocaleLowerCase().replaceAll(' ', '-')
     variableText += `--${colorName}: ${color};\n`
+  })
+  cssVar.forEach((color) => {
+    const colorName = color[0].toLocaleLowerCase().replaceAll(' ', '-')
+    variableText += `--${colorName}: ${color[1]};\n`
   })
 
   return variableText
@@ -82,7 +87,7 @@ const colorsToTW = computed(() => {
 const uniqueColor = computed(() => colorsToTW.value.reduce((acc, color) => {
   console.log('color: ', color)
   const colorIndex = acc.findIndex(item => item.name === color.name)
-  const oldColorIndex = acc.findIndex(item => item.originalColorName === color.originalColorName)
+  const oldColorIndex = acc.findIndex(item => item.name === color.originalColorName)
   if (colorIndex === -1) {
     acc.push({
       name: color.name,
