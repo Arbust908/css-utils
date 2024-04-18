@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { useRouteQuery } from '@vueuse/router'
 import { findClosestColor, getColorName } from '@/constants/NameColorJavaScript'
 import { extractFromCssVars } from '@/composables/colorExtractor'
 import { rawTailwindArray } from '@/constants/ColorLists'
@@ -52,8 +53,10 @@ const namedVariableColors = computed(() => {
 
   return extractedNamedVars
 })
+//
+
 const colorOptions = ['Slate', 'Gray', 'Zinc', 'Neutral', 'Stone', 'Red', 'Orange', 'Amber', 'Yellow', 'Lime', 'Green', 'Emerald', 'Teal', 'Cyan', 'Sky', 'Blue', 'Indigo', 'Violet', 'Purple', 'Fuchsia', 'Pink', 'Rose']
-const activeColors = ref(['Slate', 'Gray', 'Zinc', 'Neutral', 'Stone', 'Red', 'Orange', 'Amber', 'Yellow', 'Lime', 'Green', 'Emerald', 'Teal', 'Cyan', 'Sky', 'Blue', 'Indigo', 'Violet', 'Purple', 'Fuchsia', 'Pink', 'Rose'])
+const activeColors = useRouteQuery('colors', [] as string[])
 function toggleColors() {
   activeColors.value = activeColors.value.length ? ['-'] : colorOptions
 }
@@ -85,7 +88,6 @@ const colorsToTW = computed(() => {
   }).sort((a, b) => a.name?.localeCompare(b.name))
 })
 const uniqueColor = computed(() => colorsToTW.value.reduce((acc, color) => {
-  console.log('color: ', color)
   const colorIndex = acc.findIndex(item => item.name === color.name)
   const oldColorIndex = acc.findIndex(item => item.name === color.originalColorName)
   if (colorIndex === -1) {
@@ -115,15 +117,13 @@ const uniqueColor = computed(() => colorsToTW.value.reduce((acc, color) => {
 }))
 const uniqueTailwindColors = computed(() => uniqueColor.value.filter(color => color.count !== 0))
 
-const final_vars = ref('')
+const final_vars = ref<HTMLDivElement>()
 function copyAll() {
   if (!final_vars.value)
     return
 
   const text = final_vars.value.textContent
   const uniqueText = text.split(';').filter((item, pos, self) => self.indexOf(item) === pos).join(';\n')
-  console.log('uniqueText: ', uniqueText)
-
   // copy to clipboard
   navigator.clipboard.writeText(uniqueText)
     .then(() => {
@@ -133,6 +133,10 @@ function copyAll() {
       console.error('Error in copying text: ', err)
     })
 }
+
+onMounted(() => {
+  activeColors.value = activeColors.value.length ? activeColors.value : colorOptions
+})
 </script>
 
 <template>
@@ -166,12 +170,26 @@ function copyAll() {
       >
         <div class="grid grid-cols-2 gap-3">
           <div v-for="color in colorsToTW" :key="color.originalColor" class="grid grid-cols-[1fr,48px,110px,52px] items-center gap-x-2" :class="color.isExact ? 'ring-2 ring-emerald-500' : ''">
-            <span class="text-right">{{ color.originalColorName }}</span>
+            <div>
+              <p class="text-right">
+                {{ color.originalColorName }}
+              </p>
+              <p class="text-right text-xs opacity-70">
+                {{ color.originalColor }}
+              </p>
+            </div>
             <div class="flex overflow-clip rounded">
               <div class="h-6 w-6" :style="{ backgroundColor: color.originalColor }" />
               <div class="h-6 w-6" :style="{ backgroundColor: color.closestColor }" />
             </div>
-            <span class="text-left">{{ color.name }}</span>
+            <div>
+              <p class="text-right">
+                {{ color.name }}
+              </p>
+              <p class="text-right text-xs opacity-70">
+                {{ color.closestColor }}
+              </p>
+            </div>
             <span class="text-xs">{{ color.distance }}</span>
           </div>
         </div>
@@ -185,7 +203,7 @@ function copyAll() {
             v-for="{ name, closestColor } in uniqueColor"
             :key="name + closestColor"
           >
-            --{{ name.toLowerCase() }}: {{ closestColor }};
+            --{{ name }}: {{ closestColor }};
           </p>
         </div>
       </UCard>
