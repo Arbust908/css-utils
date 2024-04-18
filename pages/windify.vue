@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import { findTailwindColor, getColorName } from '@/constants/NameColorJavaScript'
+import { findClosestColor, findTailwindColor } from '@/constants/NameColorJavaScript'
 import { extractFromCssVars } from '@/composables/colorExtractor'
+import { rawTailwindArray } from '@/constants/ColorLists'
 
 const cssText = ref(`:root {
   /* Font Families */
@@ -146,24 +147,62 @@ const namedVariableColors = computed(() => {
 
   return extractedNamedVars
 })
+const colorOptions = ['Slate', 'Gray', 'Zinc', 'Neutral', 'Stone', 'Red', 'Orange', 'Amber', 'Yellow', 'Lime', 'Green', 'Emerald', 'Teal', 'Cyan', 'Sky', 'Blue', 'Indigo', 'Violet', 'Purple', 'Fuchsia', 'Pink', 'Rose']
+const activeColors = ref(['Slate', 'Gray', 'Zinc', 'Neutral', 'Stone', 'Red', 'Orange', 'Amber', 'Yellow', 'Lime', 'Green', 'Emerald', 'Teal', 'Cyan', 'Sky', 'Blue', 'Indigo', 'Violet', 'Purple', 'Fuchsia', 'Pink', 'Rose'])
+function toggleColors() {
+  activeColors.value = activeColors.value.length ? [] : colorOptions
+}
+const togglerText = computed(() => activeColors.value.length ? 'Clear All' : 'Select All')
+
+function toggleColor(colorName: string) {
+  if (activeColors.value.includes(colorName))
+    activeColors.value = activeColors.value.filter(color => color !== colorName)
+  else
+    activeColors.value = [...activeColors.value, colorName]
+}
+function isColorActive(colorName: string) {
+  return activeColors.value.includes(colorName)
+}
 
 const colorsToTW = computed(() => {
+  const filteredTWColors = rawTailwindArray.filter((color) => {
+    const colorName = color[1].split('-')[0]
+    return activeColors.value.includes(colorName)
+  })
+  const filteredMap = new Map(filteredTWColors)
   return namedVariableColors.value.map((color) => {
     const colorName = color[0]
-    const colorTWized = findTailwindColor(color[1])
+    const colorTWized = findClosestColor(color[1], filteredMap)
     return {
       ...colorTWized,
       originalColorName: colorName,
     }
   }).sort((a, b) => a.name.localeCompare(b.name))
 })
+const uniqueTailwindColors = computed(() => colorsToTW.value.reduce((acc, color) => {
+  const colorIndex = acc.findIndex(item => item.name === color.name)
+  if (colorIndex === -1) {
+    acc.push({
+      name: color.name,
+      closestColor: color.closestColor,
+      count: 1,
+    })
+  }
+  else {
+    acc[colorIndex].count = acc[colorIndex].count + 1
+  }
+
+  return acc
+}, []))
+
 const final_vars = ref('')
 function copyAll() {
   if (!final_vars.value)
     return
 
   const text = final_vars.value.textContent
-  const uniqueText = Array.from(new Set(text.split(';'))).join(';')
+  const uniqueText = text.split(';').filter((item, pos, self) => self.indexOf(item) === pos).join(';\n')
+  console.log('uniqueText: ', uniqueText)
 
   // copy to clipboard
   navigator.clipboard.writeText(uniqueText)
@@ -178,6 +217,14 @@ function copyAll() {
 
 <template>
   <div>
+    <nav class="flex flex-wrap gap-2 p-6">
+      <UButton v-for="color in colorOptions" :key="color" :color="color.toLocaleLowerCase()" :variant="isColorActive(color) ? 'solid' : 'soft'" @click="toggleColor(color)">
+        {{ color }}
+      </UButton>
+      <UButton color="gray" variant="outline" @click="toggleColors">
+        {{ togglerText }}
+      </UButton>
+    </nav>
     <article class="grid min-h-full gap-3 md:grid-cols-3">
       <UTextarea
         v-model="cssText"
@@ -198,6 +245,19 @@ function copyAll() {
             <span class="text-xs">{{ color.distance }}</span>
           </div>
         </div>
+        <section class="grid grid-cols-3 gap-2 pt-8">
+          <div v-for="color in uniqueTailwindColors" :key="color.originalColor" class="grid grid-cols-[24px,24px,1fr] items-center gap-2">
+            <div class="flex overflow-clip rounded">
+              <div class="h-6 w-6">
+                {{ color.count }}
+              </div>
+            </div>
+            <div class="flex overflow-clip rounded">
+              <div class="h-6 w-6" :style="{ backgroundColor: color.closestColor }" />
+            </div>
+            <span class="text-left">{{ color.name }}</span>
+          </div>
+        </section>
       </UCard>
     </article>
     <article class="">
