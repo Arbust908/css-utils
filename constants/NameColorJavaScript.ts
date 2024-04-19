@@ -34,9 +34,10 @@ export function findClosestColor(color: string, hexNameList: hexAndNameMap = _he
   let closestColor: any = {}
   let smallestDistance = Number.POSITIVE_INFINITY
 
-  hexNameList.forEach((name, hex) => {
+  for (const [hex, name] of hexNameList) {
     const [r2, g2, b2] = parseColor(hex)
     const distance = colorDistance([r, g, b], [r2, g2, b2])
+
     if (distance < smallestDistance) {
       smallestDistance = distance
       const finalHex = hex.startsWith('#') ? hex : `#${hex}`
@@ -45,10 +46,14 @@ export function findClosestColor(color: string, hexNameList: hexAndNameMap = _he
         closestColor: finalHex,
         name,
         isExact: distance === 0,
-        distance: distance.toFixed(4),
+        matches: distance <= maxDiff,
+        distance: Math.round(distance),
       }
+
+      if (distance <= maxDiff)
+        return closestColor
     }
-  })
+  }
 
   return closestColor
 }

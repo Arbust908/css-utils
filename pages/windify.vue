@@ -4,8 +4,8 @@ import { findClosestColor, getColorName } from '@/constants/NameColorJavaScript'
 import { extractFromCssVars } from '@/composables/colorExtractor'
 import { rawTailwindArray } from '@/constants/ColorLists'
 
-const cssText = ref(`
-.body {
+const validDiff = ref(0)
+const cssText = ref(`.body {
   background: #f5f5f5;
   color: #333;
   font-family: "Raleway", sans-serif;
@@ -80,7 +80,7 @@ const colorsToTW = computed(() => {
   const filteredMap = new Map(filteredTWColors)
   return namedVariableColors.value.map((color) => {
     const colorName = color[0]
-    const colorTWized = findClosestColor(color[1], filteredMap)
+    const colorTWized = findClosestColor(color[1], filteredMap, validDiff.value)
     return {
       ...colorTWized,
       originalColorName: colorName,
@@ -140,8 +140,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-4">
-    <nav class="flex flex-wrap gap-2 p-6">
+  <div class="general-layout">
+    <nav class="col-span-full flex flex-wrap gap-2 p-6">
       <UButton
         v-for="color in colorOptions"
         :key="color"
@@ -154,71 +154,74 @@ onMounted(() => {
       <UButton color="gray" variant="outline" @click="toggleColors">
         {{ togglerText }}
       </UButton>
+      <UInput v-model="validDiff" type="number" step="5" label="Valid Diff" />
     </nav>
-    <article class="grid gap-3 md:grid-cols-3">
-      <UCard>
-        <section class="grid grid-cols-2 gap-2 pt-8">
-          <div v-for="color in uniqueTailwindColors" :key="color.originalColor" class="grid grid-cols-[24px,24px,1fr] items-center gap-2">
-            <div class="flex overflow-clip rounded">
-              <div class="h-6 w-6">
-                {{ color.count }}
-              </div>
-            </div>
-            <div class="flex overflow-clip rounded">
-              <div class="h-6 w-6" :style="{ backgroundColor: color.closestColor }" />
-            </div>
-            <span class="text-left">{{ color.name }}</span>
+    <UCard class="col-span-1">
+      <section class="grid grid-cols-2 gap-2">
+        <div v-for="color in uniqueTailwindColors" :key="color.originalColor" class="grid grid-cols-[16px,16px,1fr] items-center gap-1">
+          <div>
+            {{ color.count }}
           </div>
-        </section>
-      </UCard>
-      <UCard
-        class="col-span-2"
-      >
-        <div class="grid grid-cols-2 gap-3">
-          <div v-for="color in colorsToTW" :key="color.originalColor" class="grid grid-cols-[1fr,48px,110px,52px] items-center gap-x-2" :class="color.isExact ? 'ring-2 ring-emerald-500' : ''">
-            <div>
-              <p class="text-right">
-                {{ color.originalColorName }}
-              </p>
-              <p class="text-right text-xs opacity-70">
-                {{ color.originalColor }}
-              </p>
-            </div>
-            <div class="flex overflow-clip rounded">
-              <div class="h-6 w-6" :style="{ backgroundColor: color.originalColor }" />
-              <div class="h-6 w-6" :style="{ backgroundColor: color.closestColor }" />
-            </div>
-            <div>
-              <p class="text-right">
-                {{ color.name }}
-              </p>
-              <p class="text-right text-xs opacity-70">
-                {{ color.closestColor }}
-              </p>
-            </div>
-            <span class="text-xs">{{ color.distance }}</span>
+          <div class="flex overflow-clip rounded">
+            <div class="h-4 w-4" :style="{ backgroundColor: color.closestColor }" />
           </div>
+          <span class="text-left text-xs">{{ color.name }}</span>
         </div>
-      </UCard>
-    </article>
-    <article class="grid gap-3 md:grid-cols-3">
-      <UCard class="relative">
-        <UIcon name="i-heroicons-clipboard-document-list-20-solid" class="absolute right-6 top-6 h-8 w-8 bg-gray-50 text-white" @click="copyAll" />
-        <div ref="final_vars" class="text-left text-xs text-gray-400">
-          <p
-            v-for="{ name, closestColor } in uniqueColor"
-            :key="name + closestColor"
-          >
-            --{{ name }}: {{ closestColor }};
-          </p>
+      </section>
+    </UCard>
+    <UCard
+      class="col-span-2"
+    >
+      <div class="grid grid-cols-2 gap-3">
+        <div v-for="color in colorsToTW" :key="color.originalColor" class="grid grid-cols-[1fr,48px,110px,52px] items-center gap-x-2 rounded p-1" :class="color.isExact ? 'ring-2 ring-emerald-500' : ''">
+          <div class="text-right">
+            <p>
+              {{ color.originalColorName }}
+            </p>
+            <p class="text-xs opacity-70">
+              {{ color.originalColor }}
+            </p>
+          </div>
+          <div class="flex overflow-clip rounded">
+            <div class="h-6 w-6" :style="{ backgroundColor: color.originalColor }" />
+            <div class="h-6 w-6" :style="{ backgroundColor: color.closestColor }" />
+          </div>
+          <div class="text-left">
+            <p>
+              {{ color.name }}
+            </p>
+            <p class="text-xs opacity-70">
+              {{ color.closestColor }}
+            </p>
+          </div>
+          <span class="text-xs">{{ color.distance }}</span>
         </div>
-      </UCard>
-      <UTextarea
-        v-model="cssText"
-        class="col-span-2"
-        autoresize
-        placeholder="Add your css here..."
-      />
-    </article>
+      </div>
+    </UCard>
+    <UCard class="relative col-span-1">
+      <UIcon name="i-heroicons-clipboard-document-list-20-solid" class="absolute right-6 top-6 h-8 w-8 bg-gray-50 text-white" @click="copyAll" />
+      <div ref="final_vars" class="text-left text-xs text-gray-400">
+        <p
+          v-for="{ name, closestColor } in uniqueColor"
+          :key="name + closestColor"
+        >
+          --{{ name }}: {{ closestColor }};
+        </p>
+      </div>
+    </UCard>
+    <UTextarea
+      v-model="cssText"
+      class="col-span-2"
+      autoresize
+      placeholder="Add your css here..."
+    />
   </div>
 </template>
+
+<style scoped>
+.general-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+</style>
