@@ -1,3 +1,5 @@
+import { fromRGBtoHex, nameToHex } from '~/constants/NameColorJavaScript'
+
 export interface ColorExtraction {
   hexColors: string[]
   rgbColors: string[]
@@ -30,13 +32,45 @@ export function extractFromCssVars(text: string): [string, string][] {
       const splittedVar = cssVar.split(': ')
       const varName = splittedVar[0].startsWith('--color-') ? splittedVar[0].split('--')[1] : splittedVar[0].split('--')[1]
       const isHex = splittedVar[1].startsWith('#')
-      if (isHex)
-        return [varName, splittedVar[1]]
-
-      return null
+      // const isRGB = splittedVar[1].startsWith('rgb(')
+      if (isHex) { return [varName, splittedVar[1]] }
+      /* else if(isRGB) {
+        const toHexColor = fromRGBtoHex()
+      } */
+      else {
+        const foundHex = nameToHex(splittedVar[0].split('--')[1])
+        return [varName, foundHex]
+      }
     })
     .filter(Boolean)
   return cssVars as [string, string][]
+}
+export function extractVarsFromCss(text: string): [string, string][] {
+  // we need a regex that matches the css variable name and its value
+  const cssVarPattern = /--[\w-]+: \s*[^;]+/g
+  const cssByLines = text.split(`\n`)
+  const cssVars = [] as string[]
+  cssByLines.forEach((line) => {
+    const _arr = Array.from(line.matchAll(cssVarPattern), m => m[0])
+    _arr.forEach((a) => {
+      cssVars.push(a)
+    })
+  })
+
+  return cssVars.map((cssVar) => {
+    const splittedVar = cssVar.split(': ')
+    const varName = splittedVar[0].startsWith('--color-') ? splittedVar[0].split('--')[1] : splittedVar[0].split('--')[1]
+    const isHex = splittedVar[1].startsWith('#')
+    // const isRGB = splittedVar[1].startsWith('rgb(')
+    if (isHex) { return [varName, splittedVar[1]] }
+    /* else if(isRGB) {
+        const toHexColor = fromRGBtoHex()
+      } */
+    else {
+      const foundHex = nameToHex(splittedVar[0].split('--')[1])
+      return [varName, foundHex]
+    }
+  }).filter(Boolean)
 }
 
 export function useColorExtractor(context?: string) {

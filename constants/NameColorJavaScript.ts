@@ -152,6 +152,15 @@ export function hexToName(hex: string): string {
     return _hexAndColor.get(hexOnlyNumber) as string
   return findClosestColor(hexOnlyNumber).name
 }
+export function nameToHex(name: string): string {
+  let found = '#FFFFFF00'
+  const lowerName = name.toLowerCase()
+  _hexAndColor.forEach((color, key) => {
+    if (color.toLowerCase() === lowerName)
+      found = `#${key}`
+  })
+  return found
+}
 /**
  * #Get Color Name
  * This method returns the name of a color based on non-name colors

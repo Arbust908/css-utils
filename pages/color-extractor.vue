@@ -7,7 +7,6 @@ const extractedColorsList = computed(() => {
   if (!cssText.value)
     return [[], [], []]
   const { hexColors, rgbColors, namedColors } = getColorsFromText(cssText.value)
-  console.log('extractedColorsList', hexColors, rgbColors, namedColors)
   if (!hexColors.length && !rgbColors.length && !namedColors.length)
     return [[], [], []]
 
@@ -16,8 +15,6 @@ const extractedColorsList = computed(() => {
 const colorText = computed(() => {
   const [hexColors, rgbColors, namedColors] = extractedColorsList.value
   let resultingText = ''
-  console.log(hexColors, rgbColors, namedColors)
-
   if (hexColors.length) {
     resultingText += ` /* Hex Colors */\n`;
     // Order and deduplicate the colors
