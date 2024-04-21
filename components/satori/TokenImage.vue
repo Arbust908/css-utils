@@ -20,7 +20,7 @@ defineProps({
         <span tw="text-[72px] text-transparent">+</span>
       </h1>
       <div tw="text-[24px]">
-        {{ amount * 100 }} in Tokens
+        {{ Number(amount) * 100 }} in Tokens
       </div>
     </div>
   </div>

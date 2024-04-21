@@ -1,4 +1,6 @@
+import { Buffer } from 'node:buffer'
 import { satori } from 'v-satori'
+import sharp from 'sharp'
 import Image from '@/components/satori/TokenImage.vue'
 // https://github.com/wobsoriano/unplugin-font-to-buffer
 // import Roboto from '@/lib/fonts/Roboto-Regular.ttf'
@@ -22,8 +24,9 @@ export default eventHandler(async (event) => {
       style: 'normal',
     }],
   })
+  const png = await sharp(Buffer.from(svg)).png().toBuffer()
 
-  setHeader(event, 'Content-Type', 'image/svg+xml')
+  setHeader(event, 'Content-Type', 'image/png')
 
-  return svg
+  return png
 })
