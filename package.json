@@ -38,6 +38,9 @@
     "@nuxt/ui": "^2.15.1",
     "@vueuse/core": "^10.9.0",
     "@vueuse/router": "^10.9.0",
-    "postcss-js": "^4.0.1"
+    "postcss-js": "^4.0.1",
+    "satori": "^0.10.13",
+    "unplugin-font-to-buffer": "^0.2.0",
+    "v-satori": "^0.2.0"
   }
 }
